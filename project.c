@@ -9,16 +9,9 @@
 #include "project.skel.h"
 
 
-#define MAX_FILES_PER_KEY 10
-#define MAX_KEY 10 //massima lunghezza della chiave
-#define MAX_PROCESSES 10
+#define MAX_LINE_LENGTH 256
 #define MAX_PATH_LEN 100
-#define MAX_KEYS 6 // Massimo numero di chiavi nel file di configurazione
 
-struct file_and_process_list {
-    char file_paths[MAX_FILES_PER_KEY][MAX_PATH_LEN];
-    char process_paths[MAX_PROCESSES][MAX_PATH_LEN];
-};
 
 static volatile sig_atomic_t stop;
 
@@ -46,74 +39,86 @@ void bump_memlock_rlimit() {
 
 //popolare la mappa
 
-int populate_map(const char *config_file, struct bpf_map *map) {
+int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_map *map_proc, char *type) {
     FILE *file = fopen(config_file, "r");
     if (!file) {
         perror("Error opening configuration file");
         return 1;
     }
+    char line[MAX_LINE_LENGTH];
+    char current_type[MAX_LINE_LENGTH];
+    int ok_value=1;
+    int ret;
+    __u32 hash_file;
+    __u32 hash_proc;
+    while (fgets(line, sizeof(line), file)) {
+        // Rimuove il carattere newline, se presente
+        if (line[strlen(line) - 1] == '\n')
+            line[strlen(line) - 1] = '\0';
 
-    char line[100];
-    char key[MAX_KEYS][MAX_KEY];
-    struct file_and_process_list list[MAX_KEYS];
-    int file_index = 0;
-    int process_index = 0;
+        // Analizza la riga per tipo, percorsi dei file e nomi dei processi
+        char file_paths[MAX_PATH_LEN];
+        char proc_names[MAX_PATH_LEN];
+        if (sscanf(line, "%[^.].%*[^:]: %[^\n]", current_type, file_paths) != 2)
+            continue;
 
-    int key_index = 0; // Inizializza key_index a 0 all'inizio della funzione
+        // Se il tipo corrente corrisponde al tipo richiesto
+        if (strcmp(current_type, type) == 0) {
+            char *token;
+            // Estrae percorsi dei file
+            token = strtok(file_paths, ",;");
+            while (token != NULL) {
+                // Popola la mappa dei file
+                printf("DEBUG => filePath: %s; \n", token);
+                memset(file_paths, 0, sizeof(file_paths));
+                strcpy(file_paths,token);
+                hash_file= jhash(file_paths, MAX_PATH_LEN, 0);
+                ret = bpf_map__update_elem(map_file,&hash_file,sizeof(hash_file),&ok_value,sizeof(ok_value),BPF_ANY);
+                if (ret < 0) {
+                // Errore nell'aggiornamento dell'elemento
+                fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
+                return ret;
+                }
+                token = strtok(NULL, ",;");
+            }
 
-while (fgets(line, sizeof(line), file)) {
-    if (sscanf(line, "[%[^]]]", key[key_index]) == 1) {
-        printf("DEBUG => key: %s", key[key_index]);
-        // Memorizza la lista attuale nel suo indice corrispondente
-        if (key_index < MAX_KEYS) {
-            memset(&list[key_index], 0, sizeof(struct file_and_process_list));
-            file_index = 0;
-            process_index = 0;
-            key_index++; // Incrementa key_index ogni volta che leggi una nuova chiave
-        } else {
-            printf("Numero massimo di chiavi raggiunto\n");
+            // Estrae nomi dei processi
+            if (sscanf(line, "%*[^:]: %*[^:]: %[^\n]", proc_names) != 1)
+                continue;
+
+            token = strtok(proc_names, ",;");
+            while (token != NULL) {
+                // Popola la mappa dei processi
+                printf("DEBUG => proc: %s; \n", token);
+                memset(proc_names, 0, sizeof(proc_names));
+                strcpy(proc_names,token);
+                hash_proc= jhash(proc_names, MAX_PATH_LEN, 0);
+                ret = bpf_map__update_elem(map_file,&hash_proc,sizeof(hash_proc),&ok_value,sizeof(ok_value),BPF_ANY);
+                if (ret < 0) {
+                // Errore nell'aggiornamento dell'elemento
+                fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
+                return ret;
+                }
+                token = strtok(NULL, ",;");
+            }
+
+            // Poiché ogni tipo può essere presente una sola volta,
+            // possiamo interrompere la scansione dopo aver trovato il tipo corrispondente
             break;
         }
-    } else if (strstr(line, "trusted processes:")) {
-        char *token = strtok(line, ":"); // Separa la linea fino al primo ":"
-        token = strtok(NULL, ",;"); // Continua a dividere la stringa utilizzando "," e ";" come delimitatori
-        while (token != NULL && strchr(token, ';') == NULL) {
-            printf("DEBUG => process: %s", token);
-            strcpy(list[key_index - 1].process_paths[process_index++], token);
-            token = strtok(NULL, ",;");
-        }
-    } else if (strstr(line, "protected files:")) {
-        char *token = strtok(line, ":"); // Separa la linea fino al primo ":"
-        token = strtok(NULL, ",;"); // Continua a dividere la stringa utilizzando "," e ";" come delimitatori
-        while (token != NULL && strchr(token, ';') == NULL) {
-            printf("DEBUG => file: %s", token);
-            strcpy(list[key_index - 1].file_paths[file_index++], token);
-            token = strtok(NULL, ",;");
-        }
-    }
-}
-
-
-     fclose(file);
-
-     // Update BPF map with the data read from configuration file
-    for (int i = 0; i < key_index; ++i) {
-        
-        
-        int ret = bpf_map__update_elem(map,&key[key_index], sizeof(key[i]),&list[i], sizeof(list[i]),BPF_ANY);
-        if (ret) {
-            perror("Error updating BPF map");
-            return 1;
-        }
     }
 
+    fclose(file);
     return 0;
+
+    
 }
 
 int main(int argc, char **argv)
 {
 	struct project_bpf *skel;
-    struct bpf_map *map;
+    struct bpf_map *map_file;
+    struct bpf_map *map_proc;
 	int err;
 
 	
@@ -131,16 +136,19 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-    // Ottieni la mappa BPF
-    map = skel->maps.file_and_process_map;
-    if (map < 0) {
+    // Ottieni le mappa BPF per la OPEN
+    map_file = skel->maps.OPEN_FILES_MAP;
+    if (map_file < 0) {
         fprintf(stderr, "Errore nell'ottenere il file descriptor della mappa BPF.\n");
         goto cleanup;
     }
-
+    map_proc = skel->maps.OPEN_PROC_MAP;
+    if (map_proc < 0) {
+        fprintf(stderr, "Errore nell'ottenere il file descriptor della mappa BPF.\n");
+        goto cleanup;
+    }
     //popolo la mappa
-
-    if((populate_map("config.txt",map))!=0){
+    if((populate_map("config.txt",map_file,map_proc,"open"))!=0){
         fprintf(stderr, "Errore nel popolare la mappa \n");
         goto cleanup;
     }
