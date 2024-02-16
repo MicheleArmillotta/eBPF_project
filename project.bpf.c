@@ -1,8 +1,7 @@
 #include <vmlinux.h>
 #include <errno.h>
 #include <bpf/bpf_helpers.h>
-#include <asm/rwonce.h>
-#include <linux/jhash.h>
+//#include <linux/jhash.h>
 
 
 
@@ -19,14 +18,14 @@
 struct {
 	__uint(type, BPF_MAP_TYPE_HASH);
 	__uint(max_entries, MAX_ENTRIES); //max 5 file da proteggere per questa syscall
-    __type(key, __u32);
+    __type(key, char[MAX_PATH_LEN]);
 	__type(value, __u32);
 } OPEN_FILES_MAP SEC(".maps") ;
 
 struct {
 	__uint(type, BPF_MAP_TYPE_HASH);
 	__uint(max_entries, MAX_ENTRIES); //max 5 proc esenti per questa syscall
-    __type(key, __u32);
+    __type(key, char[MAX_PATH_LEN]);
 	__type(value, __u32);
 } OPEN_PROC_MAP SEC(".maps") ;
 
@@ -41,21 +40,20 @@ int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter *ctx
     int *value_proc;
     char comm[MAX_PATH_LEN];
     char filename[MAX_PATH_LEN];
-    __u32 hash_file;
-    __u32 hash_proc;
+    
         
         //otteniamo percorso del file
     bpf_probe_read_user(filename, sizeof(filename), (char*)ctx->args[1]);
         //otteniamo nome del processo
     bpf_get_current_comm(comm, sizeof(comm));
 
+    bpf_printk("File aperto: %s, Processo: %s\n", filename,comm); 
         // Ora puoi fare ciò che vuoi con il nome del file e il nome del processo
-    hash_proc= jhash(comm, MAX_PATH_LEN, 0);
-    hash_file= jhash(filename, MAX_PATH_LEN, 0);
+    
 
-    value_file = bpf_map_lookup_elem(&OPEN_FILES_MAP,&hash_file);
+    value_file = bpf_map_lookup_elem(&OPEN_FILES_MAP,&filename);
 
-    value_proc = bpf_map_lookup_elem(&OPEN_PROC_MAP,&hash_proc); 
+    value_proc = bpf_map_lookup_elem(&OPEN_PROC_MAP,&comm); 
 
     //bpf_printk("File aperto: %d, Processo: %d\n", *value_file,*value_proc); 
     
