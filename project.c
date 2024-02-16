@@ -47,10 +47,9 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
     }
     char line[MAX_LINE_LENGTH];
     char current_type[MAX_LINE_LENGTH];
-    int ok_value=1;
+    __u32 ok_value=1;
     int ret;
-    __u32 hash_file;
-    __u32 hash_proc;
+    
     while (fgets(line, sizeof(line), file)) {
         // Rimuove il carattere newline, se presente
         if (line[strlen(line) - 1] == '\n')
@@ -59,6 +58,8 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
         // Analizza la riga per tipo, percorsi dei file e nomi dei processi
         char file_paths[MAX_PATH_LEN];
         char proc_names[MAX_PATH_LEN];
+        char file_path[MAX_PATH_LEN];
+        char proc_name[MAX_PATH_LEN];
         if (sscanf(line, "%[^.].%*[^:]: %[^\n]", current_type, file_paths) != 2)
             continue;
 
@@ -69,11 +70,11 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
             token = strtok(file_paths, ",;");
             while (token != NULL) {
                 // Popola la mappa dei file
-                printf("DEBUG => filePath: %s; \n", token);
-                memset(file_paths, 0, sizeof(file_paths));
-                strcpy(file_paths,token);
-                hash_file= jhash(file_paths, MAX_PATH_LEN, 0);
-                ret = bpf_map__update_elem(map_file,&hash_file,sizeof(hash_file),&ok_value,sizeof(ok_value),BPF_ANY);
+                
+                memset(file_path, 0, sizeof(file_path));
+                strcpy(file_path,token);
+                printf("DEBUG => filePath: %s; \n", file_path);
+                ret = bpf_map__update_elem(map_file,&file_path,sizeof(file_path),&ok_value,sizeof(ok_value),BPF_ANY);
                 if (ret < 0) {
                 // Errore nell'aggiornamento dell'elemento
                 fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
@@ -81,25 +82,30 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
                 }
                 token = strtok(NULL, ",;");
             }
+            if(fgets(line, sizeof(line), file) != NULL){
+                // Estrae nomi dei processi
+                if (sscanf(line, "%[^.].%*[^:]: %[^\n]", current_type, proc_names) != 2)
+                    continue;
 
-            // Estrae nomi dei processi
-            if (sscanf(line, "%*[^:]: %*[^:]: %[^\n]", proc_names) != 1)
-                continue;
-
-            token = strtok(proc_names, ",;");
-            while (token != NULL) {
-                // Popola la mappa dei processi
-                printf("DEBUG => proc: %s; \n", token);
-                memset(proc_names, 0, sizeof(proc_names));
-                strcpy(proc_names,token);
-                hash_proc= jhash(proc_names, MAX_PATH_LEN, 0);
-                ret = bpf_map__update_elem(map_file,&hash_proc,sizeof(hash_proc),&ok_value,sizeof(ok_value),BPF_ANY);
-                if (ret < 0) {
-                // Errore nell'aggiornamento dell'elemento
-                fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
-                return ret;
+                token = strtok(proc_names, ",;");
+                while (token != NULL) {
+                    // Popola la mappa dei processi
+                    
+                    memset(proc_name, 0, sizeof(proc_name));
+                    strcpy(proc_name,token);
+                    printf("DEBUG => proc: %s; \n", proc_name);
+                    
+                    ret = bpf_map__update_elem(map_file,&proc_name,sizeof(proc_name),&ok_value,sizeof(ok_value),BPF_ANY);
+                    if (ret < 0) {
+                    // Errore nell'aggiornamento dell'elemento
+                    fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
+                    return ret;
+                    }
+                    token = strtok(NULL, ",;");
                 }
-                token = strtok(NULL, ",;");
+            }
+            else{
+                return -1;
             }
 
             // Poiché ogni tipo può essere presente una sola volta,
