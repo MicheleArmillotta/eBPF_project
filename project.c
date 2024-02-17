@@ -74,7 +74,7 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
                 memset(file_path, 0, sizeof(file_path));
                 strcpy(file_path,token);
                 printf("DEBUG => filePath: %s; \n", file_path);
-                ret = bpf_map__update_elem(map_file,&file_path,sizeof(file_path),&ok_value,sizeof(ok_value),BPF_ANY);
+                ret = bpf_map__update_elem(map_file,file_path,sizeof(file_path),&ok_value,sizeof(ok_value),BPF_ANY);
                 if (ret < 0) {
                 // Errore nell'aggiornamento dell'elemento
                 fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
@@ -95,7 +95,7 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
                     strcpy(proc_name,token);
                     printf("DEBUG => proc: %s; \n", proc_name);
                     
-                    ret = bpf_map__update_elem(map_file,&proc_name,sizeof(proc_name),&ok_value,sizeof(ok_value),BPF_ANY);
+                    ret = bpf_map__update_elem(map_proc,proc_name,sizeof(proc_name),&ok_value,sizeof(ok_value),BPF_ANY);
                     if (ret < 0) {
                     // Errore nell'aggiornamento dell'elemento
                     fprintf(stderr, "Errore nell'aggiornamento dell'elemento nella mappa BPF: %s\n", strerror(errno));
