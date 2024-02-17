@@ -1,6 +1,8 @@
 #include <vmlinux.h>
+//#include <linux/bpf.h>
 #include <errno.h>
 #include <bpf/bpf_helpers.h>
+//#include <linux/jhash.h>
 
 
 
@@ -42,22 +44,23 @@ int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter *ctx
     
         
         //otteniamo percorso del file
-    bpf_probe_read_user(filename, sizeof(filename), (char*)ctx->args[1]);
+    bpf_probe_read_user_str(filename, sizeof(filename), (char*)ctx->args[1]);
         //otteniamo nome del processo
     bpf_get_current_comm(comm, sizeof(comm));
 
-    bpf_printk("File aperto: %s, Processo: %s\n", filename,comm); 
+    bpf_printk("File aperto: %s, Processo: %s\n",filename,comm); 
         // Ora puoi fare ciò che vuoi con il nome del file e il nome del processo
     
 
-    value_file = bpf_map_lookup_elem(&OPEN_FILES_MAP,&filename);
+    value_file = bpf_map_lookup_elem(&OPEN_FILES_MAP,filename);
 
-    value_proc = bpf_map_lookup_elem(&OPEN_PROC_MAP,&comm); 
+    value_proc = bpf_map_lookup_elem(&OPEN_PROC_MAP,comm); 
 
     //bpf_printk("File aperto: %d, Processo: %d\n", *value_file,*value_proc); 
     
-    if(value_file != NULL && *value_file > 0)
+    if(value_file != NULL && *value_file > 0){
         flag_path=1;
+        bpf_printk("sono dentro\n");}
     
     if(value_proc != NULL && *value_proc > 0)
         flag_process=0;
@@ -65,7 +68,7 @@ int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter *ctx
 
 
     if(flag_path==1 && flag_process==1){
-        bpf_printk("un accesso negato");
+        bpf_printk("un accesso negato\n");
         return -EACCES;
         
     }
