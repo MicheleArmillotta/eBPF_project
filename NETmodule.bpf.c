@@ -87,7 +87,7 @@ int xdp_ingress(struct xdp_md *ctx) {
             __u32 src_ip = ip->saddr;
             
             // Porta destinazione UDP
-            __u16 src_port = udp->dest;
+            __u16 src_port = bpf_ntohs(udp->dest);
 
             //DEBUG
 
