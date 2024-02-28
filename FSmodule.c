@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include <stddef.h>
-#include "project.skel.h"
+#include "NETmodule.skel.h"
 
 
 #define MAX_LINE_LENGTH 256
@@ -122,21 +122,21 @@ int populate_map(const char *config_file, struct bpf_map *map_file, struct bpf_m
 
 int main(int argc, char **argv)
 {
-	struct project_bpf *skel;
+	struct FSmodule_bpf *skel;
     struct bpf_map *map_file;
     struct bpf_map *map_proc;
 	int err;
 
 	
 	/* Open load and verify BPF application */
-	skel = project_bpf__open_and_load();
+	skel = FSmodule_bpf__open_and_load();
 	if (!skel) {
 		fprintf(stderr, "Failed to open BPF skeleton\n");
 		return 1;
 	}
 
 	/* Attach tracepoint handler */
-	err = project_bpf__attach(skel);
+	err = FSmodule_bpf__attach(skel);
 	if (err) {
 		fprintf(stderr, "Failed to attach BPF skeleton\n");
 		goto cleanup;
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 
 
 cleanup:
-	project_bpf__destroy(skel);
+	FSmodule_bpf__destroy(skel);
 	return -err;
 
 }
