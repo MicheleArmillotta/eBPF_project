@@ -5,13 +5,9 @@
 //#include <linux/jhash.h>
 
 
-
-
-
-
-
 #define MAX_PATH_LEN 100
 #define MAX_ENTRIES 5
+
 
 
 //OPEN FILES AND PROCESSES
@@ -35,13 +31,14 @@ struct {
 SEC("tracepoint/syscalls/sys_enter_openat")
 int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter *ctx)
 {
+    int ret;
     int flag_process=1; //1 vuol dire che il processo corrente non è un processo che puo fare l'azione
     int flag_path=0; //1 vuol dire che il path del file è il path non consentito
     int *value_file;
     int *value_proc;
-    char comm[MAX_PATH_LEN];
-    char filename[MAX_PATH_LEN];
-    
+    char comm[MAX_PATH_LEN]={0};
+    char filename[MAX_PATH_LEN]={0};
+    //
         
         //otteniamo percorso del file
     bpf_probe_read_user_str(filename, sizeof(filename), (char*)ctx->args[1]);
@@ -51,25 +48,30 @@ int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter *ctx
     bpf_printk("File aperto: %s, Processo: %s\n",filename,comm); 
         // Ora puoi fare ciò che vuoi con il nome del file e il nome del processo
     
-
-    value_file = bpf_map_lookup_elem(&OPEN_FILES_MAP,filename);
-
-    value_proc = bpf_map_lookup_elem(&OPEN_PROC_MAP,comm); 
-
-    //bpf_printk("File aperto: %d, Processo: %d\n", *value_file,*value_proc); 
     
-    if(value_file != NULL && *value_file > 0){
+    value_file = bpf_map_lookup_elem(&OPEN_FILES_MAP,&filename);
+
+    value_proc = bpf_map_lookup_elem(&OPEN_PROC_MAP,&comm); 
+
+    
+
+    bpf_printk("File aperto: %d, Processo: %d\n", value_file,value_proc); 
+    
+    if(value_file && (*value_file > 0)){
         flag_path=1;
         bpf_printk("sono dentro\n");}
     
-    if(value_proc != NULL && *value_proc > 0)
+    if(value_proc && (*value_proc > 0))
         flag_process=0;
         
+   
 
 
     if(flag_path==1 && flag_process==1){
         bpf_printk("un accesso negato\n");
-        return -EACCES;
+        char new_path[29] = "/home/kali/Desktop/error.txt"; // Percorso del file alternativo
+        ret = bpf_probe_write_user((void *)ctx->args[1], new_path, sizeof(new_path));
+        return 0;
         
     }
     else{
