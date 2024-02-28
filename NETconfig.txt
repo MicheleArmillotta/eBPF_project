@@ -1,0 +1,3 @@
+receive.IPs:127.0.0.1;
+receive.Ports:1000;
+receive.Interface:1;
