@@ -1,0 +1,2 @@
+malloc.proc:prova;
+malloc.size:10000;
