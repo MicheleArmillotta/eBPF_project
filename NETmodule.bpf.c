@@ -7,6 +7,7 @@
 #include <bpf/bpf_tracing.h>
 #include <bpf/bpf_core_read.h>
 
+//farlo whitelist
 
 
 #define MAX_ENTRIES 5
@@ -74,7 +75,7 @@ int xdp_ingress(struct xdp_md *ctx) {
 
             if((value_ip && (*value_ip) > 0) || (value_port && (*value_port) > 0)){
                 bpf_printk("droppo un pacchetto TCP\n");
-                return XDP_DROP;
+                return XDP_PASS;
             } 
 
 
@@ -87,7 +88,7 @@ int xdp_ingress(struct xdp_md *ctx) {
             __u32 src_ip = ip->saddr;
             
             // Porta destinazione UDP
-            __u16 src_port = bpf_ntohs(udp->dest);
+            __u16 src_port = udp->dest;
 
             //DEBUG
 
@@ -101,12 +102,12 @@ int xdp_ingress(struct xdp_md *ctx) {
 
             if((value_ip && (*value_ip) > 0) || (value_port && (*value_port) > 0)){
                 bpf_printk("droppo un pacchetto TCP\n");
-                return XDP_DROP;
+                return XDP_PASS;
             } 
         }
     }
     
-    return XDP_PASS;
+    return XDP_DROP;  //whitelist
 }
 
 char _license[] SEC("license") = "GPL";
