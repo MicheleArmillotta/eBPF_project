@@ -1,0 +1,2 @@
+Fork.LimitedProcesses:ProvaFork;
+Fork.Threshold:10;
