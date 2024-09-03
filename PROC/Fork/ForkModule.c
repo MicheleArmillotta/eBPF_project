@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     }
     
     //popolo la mappa
-    if((populate_map("PROCForkConfig.txt",map_proc,"Fork"))!=0){
+    if((populate_map("ForkConfig.txt",map_proc,"Fork"))!=0){
         fprintf(stderr, "Errore nel popolare la mappa \n");
         goto cleanup;
     }
