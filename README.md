@@ -35,7 +35,7 @@ you will need to use libbpf-bootstrap and then:
 
 1. add the name of the experiment in the Makefile
    
-  `APPS = example example example`
+   `APPS = example example example`
   
 2. create the executable
 
