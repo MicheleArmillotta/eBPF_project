@@ -171,7 +171,7 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     //popolo la mappa
-    if((populate_map("FSconfig.txt",map_file,map_proc,"open"))!=0){
+    if((populate_map("Config.txt",map_file,map_proc,"open"))!=0){
         fprintf(stderr, "Errore nel popolare la mappa \n");
         goto cleanup;
     }
