@@ -27,3 +27,7 @@ This experiment deals with limiting the number of child processes that can be ge
 
 ![ScreenshotDoc (107)](https://github.com/user-attachments/assets/48459908-61c3-48c5-96b7-97c5e697b299)
 
+
+
+## How to Run the Experiments
+For each experiment, you can find the corresponding scripts and eBPF programs in the directories. You will need to use [Awesome-Project](https://github.com/example/Awesome-Project)
