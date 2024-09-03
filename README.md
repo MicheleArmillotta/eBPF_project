@@ -32,7 +32,11 @@ This experiment deals with limiting the number of child processes that can be ge
 ## How to Run the Experiments
 For each experiment, you can find the corresponding scripts and eBPF programs in the directories. You will need to use [libbpf-bootstrap](https://github.com/libbpf/libbpf-bootstrap) and then:
 you will need to use libbpf-bootstrap and then:
-1- add the name of the experiment in the Makefile
-  ``
-2- create the executable
-3- run the executable (userspace daemon)
+
+1. add the name of the experiment in the Makefile
+   
+  `APPS = example example example`
+  
+2. create the executable
+  
+3. run the executable (userspace daemon)
