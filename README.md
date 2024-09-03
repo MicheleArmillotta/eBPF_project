@@ -38,5 +38,9 @@ you will need to use libbpf-bootstrap and then:
   `APPS = example example example`
   
 2. create the executable
+
+   `make example`
   
 3. run the executable (userspace daemon)
+
+   `sudo ./example`
