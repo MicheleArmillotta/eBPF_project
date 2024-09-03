@@ -160,7 +160,7 @@ int main(int argc, char **argv)
     }
     
     //popolo la mappa
-    if((populate_map("PROCconfig.txt",map_proc,"malloc"))!=0){
+    if((populate_map("MmapConfig.txt",map_proc,"malloc"))!=0){
         fprintf(stderr, "Errore nel popolare la mappa \n");
         goto cleanup;
     }
