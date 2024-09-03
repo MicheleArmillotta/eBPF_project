@@ -11,3 +11,5 @@ This experiment does the same thing but using LSM hooks
 
 ## NET experiments
 For the experiment that deals with protection from unwanted traffic, an example has been implemented that filters network packets that do not come from the IP addresses specified in the configuration file, or that do not point to the desired ports. This information about the IP address and port whitelists is communicated to the kernel-space always through eBPF maps. When any packet arrives on the network card, the eBPF program is activated and analyzes the packet and the protocol used. If it is a TCP or UDP packet, the IP address and the port are compared with those present in the maps, discarding the packets that do not find a match.
+
+## Process experiments
