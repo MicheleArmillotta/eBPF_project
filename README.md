@@ -30,4 +30,4 @@ This experiment deals with limiting the number of child processes that can be ge
 
 
 ## How to Run the Experiments
-For each experiment, you can find the corresponding scripts and eBPF programs in the directories. You will need to use [Awesome-Project](https://github.com/example/Awesome-Project)
+For each experiment, you can find the corresponding scripts and eBPF programs in the directories. You will need to use [libbpf-bootstrap](https://github.com/libbpf/libbpf-bootstrap)
