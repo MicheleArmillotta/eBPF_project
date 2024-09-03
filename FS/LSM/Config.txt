@@ -1,1 +1,2 @@
-
+open.protectedFiles:/home/kali/Desktop/protected.txt;
+open.allowedProc:cat;
