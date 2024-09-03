@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     }
     
     //popolo la mappa
-    if((populate_map("PROCNetConfig.txt",map_proc,"send_receive"))!=0){
+    if((populate_map("NetConfig.txt",map_proc,"send_receive"))!=0){
         fprintf(stderr, "Errore nel popolare la mappa \n");
         goto cleanup;
     }
