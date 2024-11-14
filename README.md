@@ -1,7 +1,7 @@
 # eBPF Experiments
 This repository contains a series of experiments exploring various capabilities of eBPF (Extended Berkeley Packet Filter), 
 in particular, we try to exploit the technology to block potentially malicious actions, instead of simply monitoring the system.
-Below is a brief description of each experiment and what it aims to achieve.
+Below there is a brief description of each experiment and what it aims to achieve.
 
 ## File system experiments
 ### System call Openat
@@ -31,7 +31,6 @@ This experiment deals with limiting the number of child processes that can be ge
 
 ## How to Run the Experiments
 For each experiment, you can find the corresponding scripts and eBPF programs in the directories. You will need to use [libbpf-bootstrap](https://github.com/libbpf/libbpf-bootstrap) and then:
-you will need to use libbpf-bootstrap and then:
 
 1. add the name of the experiment in the Makefile
    
