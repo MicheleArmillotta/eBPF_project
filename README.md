@@ -63,6 +63,8 @@ eBPF maps store both configuration and per-process counters.
 Whenever `fork()` is invoked, the program increments the counter and terminates the process if the configured threshold is exceeded.  
 Such control mechanisms can mitigate resource exhaustion attacks, including fork bombs.
 
+![ScreenshotDoc (107)](https://github.com/user-attachments/assets/48459908-61c3-48c5-96b7-97c5e697b299)
+
 ---
 
 ## How to Run the Experiments
@@ -85,7 +87,7 @@ To build and run them, first install **[libbpf-bootstrap](https://github.com/lib
 
 
 
-![ScreenshotDoc (107)](https://github.com/user-attachments/assets/48459908-61c3-48c5-96b7-97c5e697b299)
+
 
 
 
